@@ -9,13 +9,13 @@
 				$scope.tokens = [];
                 $scope.selected = [];
 
-				$rootScope.loadUserTokens = function() {
+				$scope.$on('userTokenList', function(event) {
 					$log.info("Loading the controller for user-tokens.js");
 					$http.get('do/token')
 						.success(function(data) {
 							$scope.tokens = data.tokens;
 						});
-				}
+				});
             }],
             controllerAs: 'tokens'
         }

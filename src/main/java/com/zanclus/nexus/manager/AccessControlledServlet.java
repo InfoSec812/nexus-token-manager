@@ -45,6 +45,17 @@ public abstract class AccessControlledServlet extends HttpServlet {
 		return false;
 	}
 
+	protected boolean isAuthorized(HttpServletRequest req, String sessionUser, String requestedUser) {
+		if (req.getSession()!=null && req.getSession().getAttribute("is_admin")!=null && ((Boolean)req.getSession().getAttribute("is_admin"))) {
+			return true;
+		} else {
+			if (sessionUser!=null && requestedUser!=null && sessionUser.contentEquals(requestedUser)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	protected boolean isAuthorized(HttpServletRequest req) {
 		if (	req.getSession()!=null && 
 				req.getSession().getAttribute("authenticate")!=null &&

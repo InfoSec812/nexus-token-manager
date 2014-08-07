@@ -2,11 +2,14 @@ package com.zanclus.nexus.manager;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
@@ -14,6 +17,7 @@ import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -73,46 +77,56 @@ public class LoginServlet extends HttpServlet {
 			GetMethod get = new GetMethod(nexusURL);
 			get.setRequestHeader("Accept", "application/json");
 			
-			int code = client.executeMethod(get);
-			if (code!=200) {
-				LOG.warn("Login failed.");
-				resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				resp.getOutputStream().close();
-			} else {
-				req.getSession().setAttribute("authenticated", Boolean.TRUE);
-				req.getSession().setAttribute("username", user);
-				
-				// Parse the Nexus login response and see if the user is an admin
-				String body = get.getResponseBodyAsString();
-				LOG.debug(body);
-				req.getSession().setAttribute("nexusAccount", body);
-				GsonBuilder builder = new GsonBuilder();
-				Gson gson = builder.setPrettyPrinting().create();
-				JsonObject info = gson.fromJson(body, JsonObject.class);
-				Boolean isAdmin = Boolean.FALSE;
-				if (	info.get("data")!=null && 
-						info.get("data").getAsJsonObject().get("clientPermissions")!=null &&
-						info.get("data").getAsJsonObject().get("clientPermissions").getAsJsonObject().get("permissions")!=null) {
-					JsonArray permissions = info.get("data")
-													.getAsJsonObject()
-													.get("clientPermissions")
-													.getAsJsonObject()
-													.get("permissions")
-													.getAsJsonArray();
-					for (JsonElement entry: permissions) {
-						if (entry.isJsonObject() && !isAdmin) {
-							String id = entry.getAsJsonObject().get("id").getAsString();
-							if (id.toLowerCase().contentEquals("security:userssetpw")) {
-								isAdmin = Boolean.TRUE;
+			try {
+				int code = client.executeMethod(get);
+				if (code!=200) {
+					LOG.warn("Login failed.");
+					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					resp.getOutputStream().close();
+				} else {
+					req.getSession().setAttribute("authenticated", Boolean.TRUE);
+					req.getSession().setAttribute("username", user);
+					
+					// Parse the Nexus login response and see if the user is an admin
+					String body = get.getResponseBodyAsString();
+					LOG.debug(body);
+					req.getSession().setAttribute("nexusAccount", body);
+					GsonBuilder builder = new GsonBuilder();
+					Gson gson = builder.setPrettyPrinting().create();
+					JsonObject info = gson.fromJson(body, JsonObject.class);
+					Boolean isAdmin = Boolean.FALSE;
+					if (	info.get("data")!=null && 
+							info.get("data").getAsJsonObject().get("clientPermissions")!=null &&
+							info.get("data").getAsJsonObject().get("clientPermissions").getAsJsonObject().get("permissions")!=null) {
+						JsonArray permissions = info.get("data")
+														.getAsJsonObject()
+														.get("clientPermissions")
+														.getAsJsonObject()
+														.get("permissions")
+														.getAsJsonArray();
+						for (JsonElement entry: permissions) {
+							if (entry.isJsonObject() && !isAdmin) {
+								String id = entry.getAsJsonObject().get("id").getAsString();
+								if (id.toLowerCase().contentEquals("security:userssetpw")) {
+									isAdmin = Boolean.TRUE;
+								}
 							}
 						}
 					}
+					req.getSession().setAttribute("is_admin", isAdmin);
+					resp.setStatus(HttpServletResponse.SC_OK);
+					resp.setContentType("application/json");
+					OutputStream out = resp.getOutputStream();
+					out.write(info.toString().getBytes());
+					out.close();
 				}
-				req.getSession().setAttribute("is_admin", isAdmin);
-				resp.setStatus(HttpServletResponse.SC_OK);
-				resp.setContentType("application/json");
+			} catch (IOException ioe) {
+				resp.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
 				OutputStream out = resp.getOutputStream();
-				out.write(info.toString().getBytes());
+				PrintWriter pw = new PrintWriter(out);
+				pw.println("Unable to connect to Nexus server at '"+nexusURL+"' to perform authentication.");
+				ioe.printStackTrace(pw);
+				pw.close();
 				out.close();
 			}
 		} else {

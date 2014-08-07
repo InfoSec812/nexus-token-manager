@@ -5,6 +5,7 @@ import static java.sql.ResultSet.*;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.naming.Context;
@@ -16,6 +17,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.sql.DataSource;
+
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,6 +120,14 @@ public class InitServlet implements Servlet {
 	 */
 	@Override
 	public void destroy() {
+		try {
+			Context initCtx = new InitialContext();
+			Context envCtx = (Context) initCtx.lookup("java:/comp/env");
+			BasicDataSource ds = (BasicDataSource)envCtx.lookup("jdbc/TokenDS");
+			ds.close();
+		} catch(NamingException | SQLException e) {
+			LOG.error("Error destroy InitServlet", e);
+		}
 	}
 
 }

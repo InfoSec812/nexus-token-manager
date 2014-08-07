@@ -1,7 +1,7 @@
 (function(){
 	var app = angular.module('nexusmanager', ['login', 'userTokens']);
 
-	app.controller('PageController', ['$http', '$rootScope', '$log', function($http, $rootScope, $log) {
+	app.controller('PageController', ['$http', '$scope', '$rootScope', '$log', function($http, $scope, $rootScope, $log) {
 		$rootScope.userinfo = {};
 		$rootScope.isAuthenticated = false;
 		$rootScope.isAdmin = false;	
@@ -10,7 +10,7 @@
 		this.showTokenList = function() {
 			$log.debug("Calling token loading function.");
 			$rootScope.activity=2;
-			$rootScope.loadTokens;
+			$scope.$emit('userTokenList');
 		}
 
 		this.logout = function() {

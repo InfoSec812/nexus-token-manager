@@ -3,6 +3,7 @@ package com.zanclus.nexus.manager;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -11,6 +12,9 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -21,6 +25,8 @@ import com.google.gson.JsonObject;
  */
 public class TokenManagementServlet extends AccessControlledServlet {
 
+	private static final Logger LOG = LoggerFactory.getLogger(InitServlet.class);
+
 	/**
 	 * 
 	 */
@@ -29,13 +35,25 @@ public class TokenManagementServlet extends AccessControlledServlet {
 	@Override   // READ existing token(s) for given user(s) while checking authorizations
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (isAuthorized(req)) {
-			String reqUser = req.getParameter("username");
+		String sessionUser = null;
+		if (req.getSession()!=null &&
+				req.getSession().getAttribute("username")!=null) {
+			sessionUser = (String) req.getSession().getAttribute("username");
+		}
+		String reqUser = null;
+		if (req.getParameter("username")!=null) {
+			reqUser = req.getParameter("username");
+		}
+		if (isAuthorized(req, sessionUser, reqUser)) {
 			String user = (String) (reqUser==null?req.getSession().getAttribute("username"):reqUser);
+			if (user==null) {
+				user = sessionUser;
+			}
 			try (	OutputStream out = resp.getOutputStream();
 					Connection c = ds.getConnection();
-					Statement s = c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-					ResultSet r = s.executeQuery("SELECT id, token FROM tokens WHERE username='"+user+"'")) {
+					PreparedStatement s = c.prepareStatement("SELECT id, token FROM tokens WHERE username=?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+				s.setString(1, user);
+				ResultSet r = s.executeQuery();
 				r.beforeFirst();
 				JsonObject result = new JsonObject();
 				JsonArray tokens = new JsonArray();
@@ -50,10 +68,12 @@ public class TokenManagementServlet extends AccessControlledServlet {
 				resp.setHeader("Content-Type", "application/json");
 				out.write(result.toString().getBytes());
 				out.close();
+				r.close();
 			} catch (SQLException e) {
 				throw new ServletException(e);
 			}
 		} else {
+			LOG.error("User '"+sessionUser+"' forbidden from accessing data for user '"+reqUser+"'");
 			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		}
 	}
