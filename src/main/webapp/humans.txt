@@ -1,0 +1,14 @@
+# humanstxt.org/
+# The humans responsible & technology colophon
+
+# TEAM
+
+  Deven Phillips -- Creator -- @InfoSec812
+
+# THANKS
+
+  Michael Dye
+
+# TECHNOLOGY COLOPHON
+
+  HTML5, CSS3, JavaScript, Angular.JS, Servlet 3.0

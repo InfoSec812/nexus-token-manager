@@ -1,0 +1,7 @@
+<div class="login">
+	<form name="loginForm" novalidate >
+		<input type="text" name="username" size="25" placeholder="Username" ng-model="credentials.username" ng-minlength="4" ng-maxlength="30" ng-required ng-text ></input>
+		<input name="password" size="25" type="password" placeholder="Password" ng-model="credentials.password" ng-minlength="5" ng-required ng-text ></input>
+		<button ng-click="doLogin()">Login</button>
+	</form>
+</div>

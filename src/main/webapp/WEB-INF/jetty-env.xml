@@ -1,0 +1,17 @@
+<?xml version="1.0"  encoding="ISO-8859-1"?>
+<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+ 
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
+    <New id="TokenDS" class="org.eclipse.jetty.plus.jndi.Resource">
+        <Arg></Arg>
+        <Arg>jdbc/TokenDS</Arg>
+        <Arg>
+            <New class="org.apache.commons.dbcp2.BasicDataSource">
+                <Set name="driverClassName">org.hsqldb.jdbc.JDBCDriver</Set>
+                <Set name="url">jdbc:hsqldb:file:~/nexus/conf/tokendb;shutdown=true</Set>
+                <Set name="username">SA</Set>
+                <Set name="password"></Set>
+            </New>
+        </Arg>
+    </New>
+</Configure>
