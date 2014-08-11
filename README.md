@@ -29,3 +29,14 @@ this application's built-in database to either allow or deny access to the
 Nexus server by setting or unsetting the appropriate REMOTE_USER header to
 be passed on to the underlying servlets.
 
+Configuration
+-------------
+
+By default, the application uses a file-based instance of [HSQLDB](http://hsqldb.org/)
+to store token information. Changing the web.xml and including the appropriate
+JDBC driver will allow you to override that behavior.
+
+To configure where the application looks for a Nexus server to authenticate against,
+you would also modify some of the initParam values in the applications's web.xml file.
+
+The web.xml file can be found at <root>/src/main/webapp/WEB-INF/web.xml
