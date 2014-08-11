@@ -1,6 +1,8 @@
 Nexus Token Auth Manager
 ========================
 
+[![Build Status](https://travis-ci.org/InfoSec812/nexus-token-manager.svg)](https://travis-ci.org/InfoSec812/nexus-token-manager)
+
 [Sonatype Nexus](http://www.sonatype.org/nexus/) is a Java based artifact repository
 where developers can publish their code artifacts for reuse in other projects. The
 open source version of that product does this job phenomenally well, with some small
