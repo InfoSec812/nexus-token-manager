@@ -17,6 +17,7 @@
 							
 							$rootScope.userinfo = data;
 							$rootScope.isAuthenticated = true;
+							$rootScope.username=data.data.clientPermissions.loggedInUsername;
 							var permissions = data.data.clientPermissions.permissions;
 							for (var i=0; i<permissions.length; i++) {
 								if (	!$rootScope.isAdmin && permissions[i].id==="security:*") {

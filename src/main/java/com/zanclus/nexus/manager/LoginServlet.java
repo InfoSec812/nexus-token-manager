@@ -1,5 +1,7 @@
 package com.zanclus.nexus.manager;
 
+import static javax.servlet.http.HttpServletResponse.*;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -81,7 +83,7 @@ public class LoginServlet extends HttpServlet {
 				int code = client.executeMethod(get);
 				if (code!=200) {
 					LOG.warn("Login failed.");
-					resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+					resp.setStatus(SC_UNAUTHORIZED);
 					resp.getOutputStream().close();
 				} else {
 					req.getSession().setAttribute("authenticated", Boolean.TRUE);
@@ -114,14 +116,14 @@ public class LoginServlet extends HttpServlet {
 						}
 					}
 					req.getSession().setAttribute("is_admin", isAdmin);
-					resp.setStatus(HttpServletResponse.SC_OK);
+					resp.setStatus(SC_OK);
 					resp.setContentType("application/json");
 					OutputStream out = resp.getOutputStream();
 					out.write(info.toString().getBytes());
 					out.close();
 				}
 			} catch (IOException ioe) {
-				resp.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+				resp.setStatus(SC_PRECONDITION_FAILED);
 				OutputStream out = resp.getOutputStream();
 				PrintWriter pw = new PrintWriter(out);
 				pw.println("Unable to connect to Nexus server at '"+nexusURL+"' to perform authentication.");
@@ -131,7 +133,7 @@ public class LoginServlet extends HttpServlet {
 			}
 		} else {
 			LOG.warn("No username and password specified");
-			resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			resp.setStatus(SC_BAD_REQUEST);
 			resp.getOutputStream().close();
 		}
 	}
@@ -146,5 +148,27 @@ public class LoginServlet extends HttpServlet {
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		this.doGet(req, resp);
+	}
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServlet#doOptions(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+	 */
+	@Override
+	protected void doOptions(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		String acctInfo = (String)req.getSession().getAttribute("nexusAccount");
+		if (acctInfo!=null) {
+			try (OutputStream out = resp.getOutputStream()) {
+				out.write(((String) req.getSession().getAttribute(
+						"nexusAccount")).getBytes());
+				resp.setHeader("Allow", "GET,POST,PUT,OPTIONS");
+				resp.setStatus(SC_OK);
+			} catch (IOException ioe) {
+				resp.setStatus(SC_INTERNAL_SERVER_ERROR);
+			}
+		} else {
+			resp.setStatus(SC_UNAUTHORIZED);
+			resp.getOutputStream().close();
+		}
 	}
 }

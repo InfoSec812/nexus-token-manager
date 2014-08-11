@@ -24,6 +24,8 @@
 	<script src="scripts/app.js"></script>
 	<script src="scripts/login.js"></script>
 	<script src="scripts/user-tokens.js"></script>
+	<script src="scripts/add-token.js"></script>
+	<script src="scripts/user-selector.js"></script>
 
     <!-- build:css styles/components/main.min.css -->
     <link rel="stylesheet" href="styles/h5bp.css">
@@ -45,7 +47,7 @@
     <nav class="navdrawer-container promote-layer">
       <h4>Navigation</h4>
       <ul>
-        <li ng-click="activity=1" ng-show="isAuthenticated"><a>Add</a></li>
+        <li ng-click="page.addToken()" ng-show="isAuthenticated"><a>Add</a></li>
         <li ng-click="page.showTokenList()" ng-show="isAuthenticated"><a>View</a></li>
         <li ng-click="activity=3" ng-show="isAuthenticated"><a>Remove</a></li>
         <li ng-click="activity=4" ng-show="isAdmin"><a>Admin Add</a></li>
@@ -59,9 +61,7 @@
 
     <main>
     	<login ng-show="activity===0"></login>
-		<div ng-show="activity===1">
-			Add Activity
-		</div>
+		<add-token ng-show="activity===1"></add-token>
 		<user-tokens ng-show="activity===2"></user-tokens>
 		<div ng-show="activity===3">
 			Delete Activity

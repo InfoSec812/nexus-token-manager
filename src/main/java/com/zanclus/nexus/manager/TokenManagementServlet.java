@@ -106,8 +106,20 @@ public class TokenManagementServlet extends AccessControlledServlet {
 	@Override	// CREATE a new token for the given user IF authorized
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (isAuthorized(req)) {
-			String user = req.getParameter("username");
+		String sessionUser = null;
+		if (req.getSession()!=null &&
+				req.getSession().getAttribute("username")!=null) {
+			sessionUser = (String) req.getSession().getAttribute("username");
+		}
+		String reqUser = null;
+		if (req.getParameter("username")!=null) {
+			reqUser = req.getParameter("username");
+		}
+		if (isAuthorized(req, sessionUser, reqUser)) {
+			String user = (String) (reqUser==null?req.getSession().getAttribute("username"):reqUser);
+			if (user==null) {
+				user = sessionUser;
+			}
 			String token = UUID.randomUUID().toString();
 			try (	OutputStream out = resp.getOutputStream();
 					Connection c = ds.getConnection();

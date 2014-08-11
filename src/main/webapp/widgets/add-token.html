@@ -1,0 +1,8 @@
+<div>
+    <form name="add-token-form" novalidate>
+        <user-selector ng-show="isAdmin"></user-selector>
+        <input  name="tokenString" size="40" placeholder="Token String" ng-model="add.tokenString"></input>
+        <button ng-click="add.generate()">Generate</button><br />
+        <button ng-click="add.persist()">Add Token</button>
+    </form>
+</div>

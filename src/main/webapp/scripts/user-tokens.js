@@ -13,6 +13,7 @@
 					$log.info("Loading the controller for user-tokens.js");
 					$http.get('do/token')
 						.success(function(data) {
+							$rootScope.activity=2;
 							$scope.tokens = data.tokens;
 						});
 				});
