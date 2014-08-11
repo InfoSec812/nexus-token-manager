@@ -1,5 +1,8 @@
-<div>
+<div class="activity" ng-animate="'activity'">
+    <h2>Current Tokens</h2>
     <form name="user-token-management-form" novalidate>
-        <radio ng-repeat="token in tokens" value="{{token.id}}">{{token.token}}</radio>
+        <label ng-show="isAdmin">User: </label><select name="userSelector" ng-model="tokenSelectedUser" ng-options="username for username in usernames" ng-show="isAdmin" ng-change="tokens.refresh()"></select><br />
+        <select ng-model="selected" ng-required="true" ng-options="token.token for token in tokenList" size=5></select><br />
+        <button class="centeredButton" ng-click="tokens.delete()">Delete</button>
     </form>
 </div>

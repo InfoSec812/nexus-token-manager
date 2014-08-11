@@ -1,5 +1,7 @@
 package com.zanclus.nexus.manager;
 
+import static javax.servlet.http.HttpServletResponse.*;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Connection;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 /**
  * @author <a href="mailto: deven.phillips@sungardas.com">Deven Phillips</a>
@@ -25,7 +28,7 @@ import com.google.gson.JsonObject;
  */
 public class TokenManagementServlet extends AccessControlledServlet {
 
-	private static final Logger LOG = LoggerFactory.getLogger(InitServlet.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TokenManagementServlet.class);
 
 	/**
 	 * 
@@ -39,19 +42,22 @@ public class TokenManagementServlet extends AccessControlledServlet {
 		if (req.getSession()!=null &&
 				req.getSession().getAttribute("username")!=null) {
 			sessionUser = (String) req.getSession().getAttribute("username");
+			LOG.info("Session user: "+sessionUser);
 		}
 		String reqUser = null;
 		if (req.getParameter("username")!=null) {
 			reqUser = req.getParameter("username");
+			LOG.info("Request user: "+reqUser);
 		}
 		if (isAuthorized(req, sessionUser, reqUser)) {
 			String user = (String) (reqUser==null?req.getSession().getAttribute("username"):reqUser);
 			if (user==null) {
+				LOG.info("Effective user is Session user");
 				user = sessionUser;
 			}
 			try (	OutputStream out = resp.getOutputStream();
 					Connection c = ds.getConnection();
-					PreparedStatement s = c.prepareStatement("SELECT id, token FROM tokens WHERE username=?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+					PreparedStatement s = c.prepareStatement("SELECT id, token FROM tokens WHERE nexususer=?", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
 				s.setString(1, user);
 				ResultSet r = s.executeQuery();
 				r.beforeFirst();
@@ -81,17 +87,29 @@ public class TokenManagementServlet extends AccessControlledServlet {
 	@Override	// DELETE the specified token IF authorized
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		if (isAuthorized(req)) {
-			String user = req.getParameter("username");
+		String sessionUser = null;
+		if (req.getSession()!=null &&
+				req.getSession().getAttribute("username")!=null) {
+			sessionUser = (String) req.getSession().getAttribute("username");
+		}
+		String reqUser = null;
+		if (req.getParameter("username")!=null) {
+			reqUser = req.getParameter("username");
+		}
+		if (isAuthorized(req, sessionUser, reqUser)) {
+			String user = (String) (reqUser==null?req.getSession().getAttribute("username"):reqUser);
+			if (user==null) {
+				user = sessionUser;
+			}
 			String token = req.getParameter("token");
 			try (	OutputStream out = resp.getOutputStream();
 					Connection c = ds.getConnection();
 					Statement s = c.createStatement()) {
-				s.executeUpdate("DELETE FROM tokens WHERE token='"+token+"' AND username='"+user+"'");
+				s.executeUpdate("DELETE FROM tokens WHERE token='"+token+"' AND nexususer='"+user+"'");
 				JsonObject result = new JsonObject();
 				result.addProperty("username", user);
 				result.addProperty("token", token);
-				resp.setStatus(HttpServletResponse.SC_OK);
+				resp.setStatus(SC_OK);
 				resp.setHeader("Content-Type", "application/json");
 				out.write(result.toString().getBytes());
 				out.close();
@@ -99,7 +117,7 @@ public class TokenManagementServlet extends AccessControlledServlet {
 				throw new ServletException(e);
 			}
 		} else {
-			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.setStatus(SC_FORBIDDEN);
 		}
 	}
 
@@ -120,23 +138,33 @@ public class TokenManagementServlet extends AccessControlledServlet {
 			if (user==null) {
 				user = sessionUser;
 			}
-			String token = UUID.randomUUID().toString();
-			try (	OutputStream out = resp.getOutputStream();
-					Connection c = ds.getConnection();
-					Statement s = c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-				s.executeUpdate("INSERT INTO tokens (username, token) VALUES ('"+user+"', '"+token+"')");
-				JsonObject result = new JsonObject();
-				result.addProperty("username", user);
-				result.addProperty("token", token);
-				resp.setStatus(HttpServletResponse.SC_OK);
-				resp.setHeader("Content-Type", "application/json");
+			String token = req.getParameter("token")==null?UUID.randomUUID().toString():req.getParameter("token");
+			JsonObject result = new JsonObject();
+			if (token.length()<8) {
+				resp.setStatus(SC_NOT_ACCEPTABLE);
+				resp.setContentType("application/json");
+				result.add("error", new JsonPrimitive("Invalid Input"));
+				result.add("message", new JsonPrimitive("Token is not sufficiently long. Must be >= 8 characters."));
+				OutputStream out = resp.getOutputStream();
 				out.write(result.toString().getBytes());
 				out.close();
-			} catch (SQLException e) {
-				throw new ServletException(e);
+			} else {
+				try (	OutputStream out = resp.getOutputStream();
+						Connection c = ds.getConnection();
+						Statement s = c.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+					s.executeUpdate("INSERT INTO tokens (nexususer, token) VALUES ('"+user+"', '"+token+"')");
+					result.addProperty("username", user);
+					result.addProperty("token", token);
+					resp.setStatus(SC_OK);
+					resp.setHeader("Content-Type", "application/json");
+					out.write(result.toString().getBytes());
+					out.close();
+				} catch (SQLException e) {
+					throw new ServletException(e);
+				}
 			}
 		} else {
-			resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			resp.setStatus(SC_FORBIDDEN);
 		}
 	}
 }

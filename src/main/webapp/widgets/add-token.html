@@ -1,8 +1,8 @@
-<div>
+<div class="activity" ng-animate="'activity'">
+    <h2>Add New Token</h2>
     <form name="add-token-form" novalidate>
-        <user-selector ng-show="isAdmin"></user-selector>
-        <input  name="tokenString" size="40" placeholder="Token String" ng-model="add.tokenString"></input>
-        <button ng-click="add.generate()">Generate</button><br />
-        <button ng-click="add.persist()">Add Token</button>
+        <label ng-show="isAdmin">User: </label><select name="userSelector" ng-model="selectedUser" ng-options="username for username in usernames" ng-show="isAdmin"></select><br />
+        <input class="tokenInput" placeholder="Token String" ng-model="tokenString"></input><br />
+        <button ng-click="add.generate()">Generate</button><button ng-click="add.persist()" class="rightalign">Add Token</button>
     </form>
 </div>

@@ -33,11 +33,12 @@ public class InitServlet implements Servlet {
 	private static final String CREATE_TOKEN_TABLE = "CREATE TABLE tokens ("
 			+ "id BIGINT IDENTITY, "
 			+ "token VARCHAR(50) NOT NULL, "
-			+ "username VARCHAR(50) NOT NULL);";
+			+ "nexususer VARCHAR(50) NOT NULL);";
 
 	private static final Logger LOG = LoggerFactory.getLogger(InitServlet.class);
 
 	private static final String TABLE_EXISTS = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.SYSTEM_TABLES WHERE TABLE_NAME='TOKENS'";
+	private static final String TABLE_CORRECT = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='TOKENS' AND COLUMN_NAME='NEXUSUSER'";
 
 	/*
 	 * (non-Javadoc)
@@ -60,12 +61,26 @@ public class InitServlet implements Servlet {
 					ResultSet r = s.executeQuery(TABLE_EXISTS)) {
 				if (r.first()) {
 					LOG.debug("Tokens table exists in database.");
-					return;
+					try (	Statement s1 = c.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY);
+							ResultSet r1 = s1.executeQuery(TABLE_CORRECT)) {
+						if (r1.first()) {
+							LOG.debug("Tokens table is correct in database.");
+							return;
+						} else {
+							LOG.warn("Table structure was wrong. Dropping table.");
+							c.createStatement().executeUpdate("DROP TABLE tokens");
+						}
+					} catch (Exception e) {
+						LOG.error("Error verifying existence of token table", e);
+						throw new ServletException(e);
+					}
 				}
 			} catch (Exception e) {
 				LOG.error("Error verifying existence of token table", e);
 				throw new ServletException(e);
 			}
+
+
 
 			try (	Connection c = ds.getConnection();
 					Statement s = c.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY);

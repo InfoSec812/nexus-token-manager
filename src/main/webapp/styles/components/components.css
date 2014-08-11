@@ -2140,8 +2140,8 @@ h2 {
   font-weight: 300;
   line-height: 1.0000em;
   /* 26px */
-  padding-top: 1.0000em;
-  padding-bottom: 0;
+  padding-top: 0px;
+  padding-bottom: 5px;
 }
 @media only screen and (min-width: 800px) {
   .xlarge,
@@ -2151,8 +2151,8 @@ h2 {
     font-weight: 300;
     line-height: 1.2381em;
     /* 52px */
-    padding-top: 0.6190em;
-    padding-bottom: 0;
+    padding-top: 0px;
+    padding-bottom: 5px;
   }
 }
 

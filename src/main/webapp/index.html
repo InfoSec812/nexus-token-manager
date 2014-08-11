@@ -25,7 +25,6 @@
 	<script src="scripts/login.js"></script>
 	<script src="scripts/user-tokens.js"></script>
 	<script src="scripts/add-token.js"></script>
-	<script src="scripts/user-selector.js"></script>
 
     <!-- build:css styles/components/main.min.css -->
     <link rel="stylesheet" href="styles/h5bp.css">
@@ -47,36 +46,27 @@
     <nav class="navdrawer-container promote-layer">
       <h4>Navigation</h4>
       <ul>
-        <li ng-click="page.addToken()" ng-show="isAuthenticated"><a>Add</a></li>
-        <li ng-click="page.showTokenList()" ng-show="isAuthenticated"><a>View</a></li>
-        <li ng-click="activity=3" ng-show="isAuthenticated"><a>Remove</a></li>
-        <li ng-click="activity=4" ng-show="isAdmin"><a>Admin Add</a></li>
-        <li ng-click="activity=5" ng-show="isAdmin"><a>Admin View</a></li>
-        <li ng-click="activity=6" ng-show="isAdmin"><a >Admin Delete</a></li>
-        <li ng-click="activity=7"><a>Help</a></li>
+        <li ng-click="page.showMain()" ng-show="isAuthenticated"><a>Home</a></li>
+        <li ng-click="page.showHelp()"><a>Help</a></li>
         <li ng-click="activity=0" ng-hide="isAuthenticated"><a>Login</a></li>
-        <li ng-click="page.logout()" ng-show="isAuthenticated"><a>Logout</a></li>
+        <li ng-click="page.logout()" ng-show="isAuthenticated"><a>Logout ({{username}})</a></li>
       </ul>
     </nav>
 
     <main>
     	<login ng-show="activity===0"></login>
-		<add-token ng-show="activity===1"></add-token>
-		<user-tokens ng-show="activity===2"></user-tokens>
-		<div ng-show="activity===3">
-			Delete Activity
+		<div ng-show="activity===2">
+			<user-tokens ng-show="isAuthenticated"></user-tokens>
+			<add-token ng-show="isAuthenticated"></add-token>
 		</div>
-		<div ng-show="activity===4">
-			Admin Add Activity
-		</div>
-		<div ng-show="activity===5">
-			Admin View Activity
-		</div>
-		<div ng-show="activity===6">
-			Admin Delete Activity
-		</div>
-		<div ng-show="activity===7">
-			Help Activity
+		<div ng-show="activity===7" ng-animate="'activity'">
+			<h2>Help</h2>
+			<p>This is an application for managing token authentication to a Sonatype Nexus artifact repository. If you are able to authenticate to the 
+			Nexus server which this token manager is pointed at, you can manage your own tokens. If you have admin privileges on that Nexus server, you
+			will also be able to manage other user's tokens from this application as well.</p>
+
+			<p ng-show="isAuthenticated"><h3>Help For Logged In Users</h3></p>
+			<p ng-show="isAdmin"><h3>Help For Administrators</h3></p>
 		</div>
     </main>
 

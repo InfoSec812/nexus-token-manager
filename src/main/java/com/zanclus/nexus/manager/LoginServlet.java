@@ -62,6 +62,7 @@ public class LoginServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
+		Boolean isAdmin = Boolean.FALSE;
 		if (	req.getParameter("username")!=null && 
 				req.getParameter("password")!=null) {
 			String user = (String) req.getParameter("username");
@@ -79,7 +80,7 @@ public class LoginServlet extends HttpServlet {
 			GetMethod get = new GetMethod(nexusURL);
 			get.setRequestHeader("Accept", "application/json");
 			
-			try {
+			try (OutputStream out = resp.getOutputStream()){
 				int code = client.executeMethod(get);
 				if (code!=200) {
 					LOG.warn("Login failed.");
@@ -96,7 +97,6 @@ public class LoginServlet extends HttpServlet {
 					GsonBuilder builder = new GsonBuilder();
 					Gson gson = builder.setPrettyPrinting().create();
 					JsonObject info = gson.fromJson(body, JsonObject.class);
-					Boolean isAdmin = Boolean.FALSE;
 					if (	info.get("data")!=null && 
 							info.get("data").getAsJsonObject().get("clientPermissions")!=null &&
 							info.get("data").getAsJsonObject().get("clientPermissions").getAsJsonObject().get("permissions")!=null) {
@@ -110,20 +110,23 @@ public class LoginServlet extends HttpServlet {
 							if (entry.isJsonObject() && !isAdmin) {
 								String id = entry.getAsJsonObject().get("id").getAsString();
 								if (id.toLowerCase().contentEquals("security:userssetpw")) {
-									isAdmin = Boolean.TRUE;
+									if (entry.getAsJsonObject().get("value").getAsInt()==15) {
+										LOG.debug("User has ADMIN privileges.");
+										isAdmin = Boolean.TRUE;
+									}
 								}
 							}
 						}
 					}
-					req.getSession().setAttribute("is_admin", isAdmin);
 					resp.setStatus(SC_OK);
 					resp.setContentType("application/json");
-					OutputStream out = resp.getOutputStream();
+					req.getSession().setAttribute("is_admin", isAdmin);
 					out.write(info.toString().getBytes());
 					out.close();
 				}
 			} catch (IOException ioe) {
 				resp.setStatus(SC_PRECONDITION_FAILED);
+				req.getSession().setAttribute("is_admin", isAdmin);
 				OutputStream out = resp.getOutputStream();
 				PrintWriter pw = new PrintWriter(out);
 				pw.println("Unable to connect to Nexus server at '"+nexusURL+"' to perform authentication.");
@@ -132,6 +135,7 @@ public class LoginServlet extends HttpServlet {
 				out.close();
 			}
 		} else {
+			req.getSession().setAttribute("is_admin", isAdmin);
 			LOG.warn("No username and password specified");
 			resp.setStatus(SC_BAD_REQUEST);
 			resp.getOutputStream().close();

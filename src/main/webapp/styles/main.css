@@ -69,7 +69,7 @@ body.open {
   color: #fefefe;
   float: none;
   max-width: none;
-  font-weight: 300;
+  font-weight: 500;
   line-height: 60px;
 }
 
@@ -283,6 +283,39 @@ button.menu img {
   background-color: #DDCCCC;
 }
 
+.radio-token {
+  font-family: monospace;
+}
+
+.radio-token input {
+  margin-right: 4pt;
+}
+
+.leftalign {
+  float: left;
+}
+
+.rightalign {
+  float: right;
+}
+
+.activity {
+  width: 320px;
+  margin: 5px auto;
+  padding: 15px;
+  border-style: dotted;
+  border-color: rgba(0,0,0,0.2);
+}
+
+.centeredButton {
+  width: 60px;
+  margin: 5px auto;
+}
+
+.tokenInput {
+  width: 100%;
+}
+
 .voteup:hover {
   background-color: #CCDDCC;
 }
@@ -298,6 +331,14 @@ main {
 @media all and (min-width: 990px) {
   .app-bar {
     position: relative;
+  }
+
+  .activity {
+    float: left;
+    margin-top: 5px;
+    margin-left: 10px;
+    margin-right: 10px;
+    height: 285px;
   }
 
   .app-bar.open,
